@@ -1,0 +1,62 @@
+# ReScript build artifacts
+lib/
+*.mjs
+*.d.ts
+.merlin
+.bsb.lock
+
+# Dependencies
+node_modules/
+.deno_cache/
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Benchmark results
+benchmark-results/
+
+# Build outputs
+dist/
+build/
+out/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Package manager
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Deployment
+.deploy/
+
+# Data
+uploads/
+data/
+*.sqlite
+*.db
