@@ -1,395 +1,76 @@
-= ReScript WASM Runtime
+= rescript-wasm-runtime
+Jonathan D.A. Jewell <jonathan.jewell@gmail.com>
+:toc: macro
+:icons: font
+:source-highlighter: rouge
+:experimental:
+:url-github: https://github.com/hyperpolymath/rescript-wasm-runtime
+:url-gitlab: https://gitlab.com/hyperpolymath/rescript-wasm-runtime
+:url-bitbucket: https://bitbucket.org/hyperpolymath/rescript-wasm-runtime
+:url-codeberg: https://codeberg.org/hyperpolymath/rescript-wasm-runtime
 
-> High-performance, type-safe HTTP server runtime combining ReScript, WebAssembly, and Deno
+ReScript WASM runtime and bindings
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)]()
-[![ReScript](https://img.shields.io/badge/ReScript-v11-red.svg)]()
-[![Deno](https://img.shields.io/badge/Deno-1.40+-blue.svg)]()
+image:https://img.shields.io/badge/RSR-Certified-gold[RSR Certified]
+image:https://img.shields.io/badge/License-AGPL%20v3-blue[License]
 
-== 🚀 Performance Highlights
+toc::[]
 
-- *98% smaller bundles*: ~4.8KB vs 5MB typical Node.js stack
-- *94% faster startup*: <100ms cold start vs traditional runtimes
-- *90% less memory*: Minimal memory footprint for microservices
-- *Type-safe*: Full type safety from ReScript to runtime
+== Overview
 
-== 📦 What is This?
-
-ReScript WASM Runtime is a modern alternative to the Node.js + npm stack, combining:
+rescript-wasm-runtime is part of the link:https://rhodium.sh[Rhodium Standard] (RSR) ecosystem.
 
-- *ReScript*: Type-safe functional programming language
-- *WebAssembly*: High-performance compilation target
-- *Deno*: Secure, modern JavaScript/TypeScript runtime
+Domain: *software-development*
 
-Perfect for building:
-- Microservices
-- RESTful APIs
-- WebSocket servers
-- Serverless functions
-- Edge computing applications
-
-== 🎯 Quick Start
-
-=== Prerequisites
-
-```bash
-= Install Deno
-curl -fsSL https://deno.land/install.sh | sh
+== Installation
 
-= Install Node.js (for ReScript compiler)
-= https://nodejs.org/
+[source,bash]
+----
+# Clone from GitHub (primary)
+git clone {url-github}
 
-= Install Just (build tool)
-curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to /usr/local/bin
-```
+# Or from mirrors
+git clone {url-gitlab}
+git clone {url-codeberg}
+----
 
-=== Hello World in 3 Steps
+== RSR Stack
 
-1. *Clone and install*:
-```bash
-git clone https://github.com/yourusername/rescript-wasm-runtime.git
-cd rescript-wasm-runtime
-npm install
-```
-
-2. *Build*:
-```bash
-just build
-```
-
-3. *Run*:
-```bash
-just dev-hello
-```
+This project follows RSR conventions:
 
-Visit `http://localhost:8000` - you're now running a <1KB HTTP server!
-
-== 📚 Examples
+* ✅ ReScript for frontend/logic
+* ✅ Deno for JS runtime
+* ✅ WASM for performance-critical code
+* ✅ Rust/OCaml/Haskell for systems/proofs
+* ✅ Guile/Scheme for configuration
+* ❌ No TypeScript
+* ❌ No Go
+* ❌ No npm
 
-=== Hello World (~1KB)
+== Mirrors
 
-```rescript
-// examples/hello-world/main.res
-let handler = async (_req: Deno.request): promise<Deno.response> => {
-  Deno.Response.text("Hello, World!", ())
-}
+[cols="1,2"]
+|===
+| Platform | URL
 
-Server.simple(~port=8000, handler)
-```
+| GitHub (primary) | {url-github}
+| GitLab | {url-gitlab}
+| Bitbucket | {url-bitbucket}
+| Codeberg | {url-codeberg}
+|===
 
-=== RESTful API with CRUD
+== License
 
-```rescript
-// examples/api-server/main.res
-let router = Router.make()
-  ->Router.use(Middleware.logger())
-  ->Router.use(Middleware.cors())
-  ->Router.get("/todos", listTodos)
-  ->Router.post("/todos", createTodo)
-  ->Router.put("/todos/:id", updateTodo)
-  ->Router.del("/todos/:id", deleteTodo)
+Licensed under AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5.
 
-Server.withRouter(~port=8000, router)
-```
+See link:LICENSE[LICENSE] for details.
 
-Run: `just dev-api`
+== Contributing
 
-=== Middleware Example
+See link:CONTRIBUTING.adoc[CONTRIBUTING.adoc].
 
-```rescript
-// Custom middleware
-let customAuth: Router.middleware = (req, next) => {
-  let headers = Deno.Request.headers(req)
-
-  switch Js.Dict.get(headers, "authorization") {
-  | Some(_token) => next()  // Authorized
-  | None => Promise.resolve(
-      Deno.Response.json(
-        Js.Json.object_(Js.Dict.fromArray([
-          ("error", Js.Json.string("Unauthorized"))
-        ])),
-        ~status=401,
-        ()
-      )
-    )
-  }
-}
-
-let router = Router.make()
-  ->Router.use(customAuth)
-  ->Router.get("/protected", handler)
-```
-
-== 🛠️ Available Examples
-
-| Example | Description | Bundle Size | Run Command |
-|---------|-------------|-------------|-------------|
-| `hello-world` | Minimal HTTP server | ~1KB | `just dev-hello` |
-| `api-server` | RESTful CRUD API | ~4.8KB | `just dev-api` |
-| `websocket` | WebSocket server | ~3KB | `just dev-ws` |
-| `static-files` | Static file serving | ~2KB | `just dev-static` |
-| `microservices` | Auth microservice | ~5KB | `just dev-micro` |
-
-== 📖 Core API
-
-=== Server Module
-
-```rescript
-// Simple server
-Server.simple(~port=8000, ~hostname="127.0.0.1", handler)
-
-// With router
-Server.withRouter(~port=8000, router)
-```
-
-=== Router Module
-
-```rescript
-let router = Router.make()
-  ->Router.get("/path", handler)
-  ->Router.post("/path", handler)
-  ->Router.put("/path", handler)
-  ->Router.del("/path", handler)
-  ->Router.patch("/path", handler)
-  ->Router.use(middleware)
-  ->Router.notFound(custom404Handler)
-```
-
-=== Built-in Middleware
-
-```rescript
-// CORS
-Middleware.cors(~origin="*", ~methods=[...], ())
-
-// Logging
-Middleware.logger()
-
-// Rate limiting
-Middleware.rateLimit(~maxRequests=100, ~windowMs=60000.0, ())
-
-// Authentication
-Middleware.auth(~secret="your-secret")
-
-// Error handling
-Middleware.errorHandler()
-
-// Compression
-Middleware.compress()
-```
-
-=== Response Helpers
-
-```rescript
-// Text response
-Deno.Response.text("Hello", ~status=200, ())
-
-// JSON response
-Deno.Response.json(jsonData, ~status=200, ())
-
-// HTML response
-Deno.Response.html("<h1>Hello</h1>", ~status=200, ())
-```
-
-== 🔧 Development
-
-=== Build Commands
-
-```bash
-just build          # Build all sources
-just rebuild        # Clean and rebuild
-just watch          # Watch mode
-just clean          # Clean artifacts
-```
-
-=== Testing
-
-```bash
-just test           # Run all tests
-just test-unit      # Unit tests only
-just test-integration  # Integration tests
-just test-coverage  # With coverage report
-just test-watch     # Watch mode
-```
-
-=== Benchmarking
-
-```bash
-just bench          # Run all benchmarks
-just bench-startup  # Startup time
-just bench-memory   # Memory usage
-just bench-throughput  # Request throughput
-just bench-compare  # Compare with Node.js
-```
-
-=== Container Support
-
-```bash
-just container-build  # Build with Podman
-just container-run    # Run container
-```
-
-== 📊 Benchmarks
-
-=== Startup Time
-
-| Runtime | Cold Start | First Request | Total |
-|---------|------------|---------------|-------|
-| ReScript + Deno | 95ms | 12ms | 107ms |
-| Node.js + Express | 1,850ms | 45ms | 1,895ms |
-| *Improvement* | *94.8% faster* | *73.3% faster* | *94.3% faster* |
-
-=== Bundle Size
-
-| Application | ReScript | Node.js | Reduction |
-|-------------|----------|---------|-----------|
-| Hello World | 1KB | 5MB | 99.98% |
-| API Server | 4.8KB | 8MB | 99.94% |
-| WebSocket | 3KB | 6MB | 99.95% |
-
-=== Memory Usage
-
-| Runtime | Idle | 100 Conn | 1000 Conn |
-|---------|------|----------|-----------|
-| ReScript + Deno | 12MB | 25MB | 45MB |
-| Node.js + Express | 85MB | 180MB | 450MB |
-| *Improvement* | *85.8%* | *86.1%* | *90.0%* |
-
-*Run `just bench` to verify these numbers in your environment*
-
-== 🏗️ Architecture
-
-```
-┌─────────────────────────────────────┐
-│         ReScript Source             │
-│    (Type-safe, Functional)          │
-└──────────────┬──────────────────────┘
-               │
-               ▼
-┌─────────────────────────────────────┐
-│      ReScript Compiler              │
-│   (ReScript → JavaScript)           │
-└──────────────┬──────────────────────┘
-               │
-               ▼
-┌─────────────────────────────────────┐
-│     ES Module Output (.mjs)         │
-│      (Optimized Bundle)             │
-└──────────────┬──────────────────────┘
-               │
-               ├──────────────┬────────────────┐
-               ▼              ▼                ▼
-         ┌─────────┐    ┌─────────┐    ┌──────────┐
-         │  Deno   │    │   Bun   │    │   WASM   │
-         │ Runtime │    │ Runtime │    │  Target  │
-         └─────────┘    └─────────┘    └──────────┘
-```
-
-=== Key Components
-
-1. *Deno.res*: Runtime bindings for Deno APIs
-2. *Server.res*: HTTP server abstraction
-3. *Router.res*: Type-safe routing with middleware
-4. *Middleware.res*: Common middleware implementations
-5. *Examples*: Production-ready application templates
-
-== 🎓 Documentation
-
-- [Architecture Guide](docs/architecture.md)
-- [API Reference](docs/api-reference.md)
-- [Contributing Guide](CONTRIBUTING.md)
-- [Changelog](CHANGELOG.md)
-- [Migration from Node.js](docs/migration.md)
-- [Deployment Guide](docs/deployment.md)
-
-== 🌟 Features
-
-=== ✅ Implemented
-
-- ✓ Full HTTP server implementation
-- ✓ Type-safe routing with path parameters
-- ✓ Middleware pipeline
-- ✓ CORS support
-- ✓ Rate limiting
-- ✓ Authentication helpers
-- ✓ Static file serving
-- ✓ WebSocket support
-- ✓ JSON parsing/serialization
-- ✓ Error handling
-- ✓ Logging
-- ✓ Multi-stage container builds
-- ✓ GitLab CI/CD pipeline
-- ✓ Comprehensive test suite
-- ✓ Benchmark suite
-
-=== 🚧 In Progress
-
-- ⏳ WebAssembly compilation target
-- ⏳ Bun runtime support
-- ⏳ GraphQL server example
-- ⏳ Database integration examples
-- ⏳ Server-side rendering
-- ⏳ Hot reload development mode
-
-=== 📋 Planned
-
-- ▢ Streaming responses
-- ▢ File upload handling
-- ▢ Session management
-- ▢ CLI scaffolding tool
-- ▢ Plugin system
-- ▢ Metrics & monitoring
-
-== 🤝 Contributing
-
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-=== Quick Contribution Guide
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Make your changes
-4. Run tests: `just test`
-5. Commit: `git commit -m "Add amazing feature"`
-6. Push: `git push origin feature/amazing-feature`
-7. Open a Pull Request
-
-== 📝 License
-
-MIT License - see [LICENSE](LICENSE) for details
-
-== 🙏 Acknowledgments
-
-- [ReScript](https://rescript-lang.org/) - The ReScript team
-- [Deno](https://deno.land/) - The Deno team
-- [WebAssembly](https://webassembly.org/) - The WASM community
-
-== 📞 Support
-
-- 📧 Email: support@example.com
-- 💬 Discord: [Join our server](https://discord.gg/example)
-- 🐛 Issues: [GitHub Issues](https://github.com/yourusername/rescript-wasm-runtime/issues)
-- 📖 Docs: [Documentation](https://docs.example.com)
-
-== 🗺️ Roadmap
-
-=== Q1 2025
-- [ ] WebAssembly compilation pipeline
-- [ ] Bun runtime support
-- [ ] Production deployment guides
-
-=== Q2 2025
-- [ ] Plugin ecosystem
-- [ ] Metrics & observability
-- [ ] Cloud platform integrations
-
-=== Q3 2025
-- [ ] GraphQL support
-- [ ] gRPC support
-- [ ] Advanced caching
-
----
-
-*Built with ❤️ using ReScript, Deno, and WebAssembly*
-
-*Making web servers fast, small, and type-safe - one bundle at a time.*
+== Metadata
+
+* Domain: software-development
+* Framework: RSR (Rhodium Standard Repository)
+* Dublin Core: link:.well-known/dc.xml[.well-known/dc.xml]
