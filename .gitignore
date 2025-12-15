@@ -1,62 +1,79 @@
-# ReScript build artifacts
-lib/
-*.mjs
-*.d.ts
-.merlin
-.bsb.lock
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# RSR-compliant .gitignore
 
-# Dependencies
-node_modules/
-.deno_cache/
-
-# Logs
-*.log
-logs/
-
-# Environment
-.env
-.env.local
-.env.*.local
-
-# Editor
-.vscode/
-.idea/
+# OS & Editor
+.DS_Store
+Thumbs.db
 *.swp
 *.swo
 *~
-.DS_Store
+.idea/
+.vscode/
 
-# Test coverage
-coverage/
-.nyc_output/
+# Build
+/target/
+/_build/
+/build/
+/dist/
+/out/
 
-# Benchmark results
-benchmark-results/
+# Dependencies
+/node_modules/
+/vendor/
+/deps/
+/.elixir_ls/
 
-# Build outputs
-dist/
-build/
-out/
+# Rust
+# Cargo.lock  # Keep for binaries
 
-# Temporary files
-tmp/
-temp/
+# Elixir
+/cover/
+/doc/
+*.ez
+erl_crash.dump
+
+# Julia
+*.jl.cov
+*.jl.mem
+/Manifest.toml
+
+# ReScript
+/lib/bs/
+/.bsb.lock
+
+# Python (SaltStack only)
+__pycache__/
+*.py[cod]
+.venv/
+
+# Ada/SPARK
+*.ali
+/obj/
+/bin/
+
+# Haskell
+/.stack-work/
+/dist-newstyle/
+
+# Chapel
+*.chpl.tmp.*
+
+# Secrets
+.env
+.env.*
+*.pem
+*.key
+secrets/
+
+# Test/Coverage
+/coverage/
+htmlcov/
+
+# Logs
+*.log
+/logs/
+
+# Temp
+/tmp/
 *.tmp
-
-# OS files
-Thumbs.db
-.DS_Store
-
-# Package manager
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
-
-# Deployment
-.deploy/
-
-# Data
-uploads/
-data/
-*.sqlite
-*.db
+*.bak
