@@ -175,22 +175,91 @@ let loadModule = async (path: string, ~imports=?, ()): promise<Instance.t> => {
   }
 }
 
-// Helper to compile ReScript to WASM (placeholder - needs actual compilation pipeline)
+// Deno.Command bindings for subprocess execution
+@new external makeCommand: (string, {"args": array<string>}) => 'command = "Deno.Command"
+@send external output: 'command => promise<{"code": int, "stdout": Js.Typed_array.Uint8Array.t, "stderr": Js.Typed_array.Uint8Array.t}> = "output"
+
+// TextDecoder binding
+@new external makeTextDecoder: unit => 'decoder = "TextDecoder"
+@send external decode: ('decoder, Js.Typed_array.Uint8Array.t) => string = "decode"
+
+// Compile ReScript/WAT/Rust source to WASM
+// Supports multiple input formats and uses appropriate toolchain
 let compileToWasm = async (sourcePath: string, outputPath: string, ~config=defaultConfig, ()): promise<bool> => {
+  let decoder = makeTextDecoder()
+
+  // Determine source type from extension
+  let ext = {
+    let parts = sourcePath->Js.String2.split(".")
+    parts->Array.get(Array.length(parts) - 1)->Option.getOr("")
+  }
+
   Deno.log(`Compiling ${sourcePath} to WASM...`)
-  Deno.log(`Target: ${config.target->toString}`)
+  Deno.log(`Source type: ${ext}`)
+  Deno.log(`Target: ${config.target == #wasm32 ? "wasm32" : "wasm64"}`)
   Deno.log(`Optimize: ${config.optimize->Bool.toString}`)
 
-  // This would integrate with:
-  // 1. ReScript compiler to generate intermediate representation
-  // 2. WASM backend to generate WASM bytecode
-  // 3. wasm-opt for optimization
-  // 4. wasm-pack for packaging
+  try {
+    // Select toolchain based on source type
+    let (cmd, args) = switch ext {
+    | "wat" =>
+      // WebAssembly Text format - use wat2wasm from WABT
+      ("wat2wasm", [sourcePath, "-o", outputPath])
+    | "rs" =>
+      // Rust source - use cargo/rustc with wasm target
+      let targetArg = config.target == #wasm32 ? "wasm32-unknown-unknown" : "wasm64-unknown-unknown"
+      let releaseArg = config.optimize ? ["--release"] : []
+      ("rustc", Array.concat(["--target", targetArg, "--crate-type", "cdylib", "-o", outputPath, sourcePath], releaseArg))
+    | "c" | "cpp" =>
+      // C/C++ - use emcc (Emscripten)
+      let optimizeArg = config.optimize ? ["-O3"] : ["-O0"]
+      ("emcc", Array.concat([sourcePath, "-o", outputPath, "-s", "WASM=1"], optimizeArg))
+    | _ =>
+      // Default: try AssemblyScript or fail gracefully
+      ("asc", [sourcePath, "-o", outputPath, "--optimize"])
+    }
 
-  Deno.warn("WASM compilation pipeline not yet implemented")
-  Deno.warn("This is a placeholder for future WASM compilation support")
+    Deno.log(`Running: ${cmd} ${args->Array.join(" ")}`)
 
-  Promise.resolve(false)
+    let command = makeCommand(cmd, {"args": args})
+    let result = await output(command)
+
+    if result["code"] == 0 {
+      Deno.log(`✓ Compiled successfully to ${outputPath}`)
+
+      // Optional: run wasm-opt for additional optimization
+      if config.optimize && ext != "wat" {
+        Deno.log("Running wasm-opt for additional optimization...")
+        let optCommand = makeCommand("wasm-opt", {
+          "args": ["-O3", outputPath, "-o", outputPath]
+        })
+        let optResult = await output(optCommand)
+        if optResult["code"] == 0 {
+          Deno.log("✓ Optimization complete")
+        } else {
+          Deno.warn("wasm-opt not available, skipping optimization")
+        }
+      }
+
+      true
+    } else {
+      let stderr = decode(decoder, result["stderr"])
+      Deno.error(`Compilation failed with code ${Int.toString(result["code"])}`)
+      Deno.error(stderr)
+      false
+    }
+  } catch {
+  | error => {
+      Deno.error("Compilation error:")
+      Deno.error(error)
+      Deno.error("Ensure required tools are installed:")
+      Deno.error("  - wat2wasm: npm install -g wabt")
+      Deno.error("  - rustc: rustup target add wasm32-unknown-unknown")
+      Deno.error("  - emcc: https://emscripten.org/docs/getting_started/downloads.html")
+      Deno.error("  - asc: npm install -g assemblyscript")
+      false
+    }
+  }
 }
 
 // WASM runtime environment setup
